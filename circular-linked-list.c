@@ -295,6 +295,16 @@ int invertList(listNode* h) {
 
 	h->rlink = mid;  //헤드노드의 다음 노드를 mid 노드가 되게 설정
 
+	/* 역순으로 재배치된 리스트의 마지막 노드의 rlink가 헤드노드가 아닌 NULL 값을 갖게 되어 조치 */
+	now = h->rlink; //now 노드를 역순으로 재배치된 리스트의 첫번째 노드로 설정
+	
+	while(now->rlink != NULL) {  //리스트를 따라 다시 출발... rlink가 NULL인 마지막 노드까지 now 이동
+		now = now->rlink;
+	}
+
+	now->rlink = h;  //마지막 노드의 rlink를 헤드노드로 연결하고, 헤드노드의 llink를 마지막 노드로 연결
+	h->llink = now;
+
 	return 0;
 }
 
