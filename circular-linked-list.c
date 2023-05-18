@@ -121,12 +121,18 @@ int initialize(listNode** h) {
 	return 1;
 }
 
-/* 메모리 해제 */
+/* 모든 메모리 해제 */
 int freeList(listNode* h){
 
-	h->llink->rlink = h->rlink;  //노드 h의 왼쪽 노드의 rlink를 h의 오른쪽 노드를 가리키게
-	h->rlink->llink = h->llink;  //노드 h의 오른쪽 노드의 llink를 h의 왼쪽 노드를 가리키게
-	free(h);  //메모리 반환
+	listNode* now = h->rlink;  //리스트를 이동할 now 노드
+	listNode* prev = NULL;  //now의 이전 노드
+
+	while(now != h) {  //리스트를 한 바퀴 돌면서
+		prev = now;  //prev를 now로 설정
+		now = now->rlink;  //now를 다음 칸으로 이동
+		free(prev);  //now였던 prev 메모리 반환
+	}
+	free(now);  //마지막 노드 메모리 반환
 
 	return 0;
 }
@@ -176,11 +182,25 @@ void printList(listNode* h) {
  */
 int insertLast(listNode* h, int key) {
 
-	listNode* new = (listNode*)malloc(sizeof(listNode));  //추가할 노드 new 메모리 할당
+	listNode* new = (listNode*)malloc(sizeof(listNode));  //새 노드 new 선언 및 메모리 할당
 	new->key = key;
-	new->llink = h->llink;  //h의 이전 노드를 new의 이전 노드로 설정
-	new->llink->rlink = new;  //new의 이전 노드의 rlink가 new를 가리키게
-	new->rlink = h;  //new의 다음 노드가 h가 되게 설정
+	new->llink = NULL;
+	new->rlink = NULL;
+
+	if(h->rlink == h) {  //만약 리스트가 비어있었으면 유일한 노드로 헤드노드와 연결
+		new->llink = h;
+		new->rlink = h;
+		h->llink = new;
+		h->rlink = new;
+
+		return 1;
+	}
+
+	listNode* tail = h->llink;  //원래 마지막이었던 노드 tail
+	new->llink = tail;  //새 노드의 llink가 tail을 가리키게 설정
+	new->rlink = h;  //새 노드의 rlink가 헤드노드를 가리키게 설정
+	tail->rlink = new;  //tail의 다음 노드가 새 노드가 되게 설정
+	h->llink = new;  //헤드노드의 이전 노드가 새 노드가 되게 설정
 
 	return 1;
 }
@@ -191,14 +211,18 @@ int insertLast(listNode* h, int key) {
  */
 int deleteLast(listNode* h) {
 
-	listNode* deleted = h->llink;  //h의 왼쪽 노드를 deleted 노드로
+	listNode* del = h->llink;  //삭제할 노드 del
+	listNode* tail = del->llink;  //삭제 후 마지막 노드가 될 tail
 
-	if(deleted == h) {  //만약 헤드노드밖에 없으면 오류메시지 출력
-		printf("Deletion of head node is not permitted.");
-		return 0;
+	if(del == h) {  //리스트가 비어있으면 오류메시지 출력
+		printf("nothing to delete");
+		return 1;
 	}
 
-	freeList(deleted);  //deleted 노드 삭제
+	tail->rlink = h;  //마지막 노드가 될 tail의 다음 노드가 헤드노드가 되게 설정
+	h->llink = tail;  //헤드노드의 이전 노드가 tail노드가 되게 설정
+
+	free(del);  //삭제할 노드의 메모리 반환
 
 	return 1;
 }
@@ -209,11 +233,17 @@ int deleteLast(listNode* h) {
  */
 int insertFirst(listNode* h, int key) {
 
-	listNode* new = (listNode*)malloc(sizeof(listNode));  //추가할 노드 new 메모리 할당
+	listNode* new = (listNode*)malloc(sizeof(listNode));  //새 노드 new 선언 및 메모리 할당
 	new->key = key;
-	new->llink = h;  //new의 이전 노드를 h로 설정
-	new->rlink = h->rlink;  //new의 다음 노드를 h의 다음 노드로 설정
-	h->rlink = new;  //h의 다음 노드를 new로 수정
+	new->llink = NULL;
+	new->rlink = NULL;
+
+	listNode* sec = h->rlink;  //두번째 노드가 될 sec
+
+	new->llink = h;  //새 노드의 llink가 헤드노드를 가리키게 설정
+	new->rlink = sec;  //새 노드의 rlink가 두번째 노드가 될 sec을 가리키게 설정
+	h->rlink = new;  //헤드노드의 다음 노드가 새 노드가 되게 설정
+	sec->llink = new;  //두번째 노드의 이전 노드가 새 노드가 되게 설정
 
 	return 1;
 }
@@ -223,14 +253,18 @@ int insertFirst(listNode* h, int key) {
  */
 int deleteFirst(listNode* h) {
 
-	listNode* deleted = h->rlink;  //h의 오른쪽 노드를 deleted 노드로
+	listNode* del = h->rlink;  //삭제할 노드 del
+	listNode* fir = del->rlink;  //첫번째 노드가 될 fir
 
-	if(deleted == h) {  //만약 헤드노드밖에 없으면 오류메시지 출력
-		printf("Deletion of head node is not permitted.");
-		return 0;
+	if(del == h) {  //리스트가 비어있으면 오류메시지 출력
+		printf("nothing to delete");
+		return 1;
 	}
 
-	freeList(deleted);  //deleted 노드 삭제
+	fir->llink = h;  //첫번째 노드의 이전 노드가 헤드노드가 되게 설정
+	h->rlink = fir;  //헤드노드의 다음 노드가 첫번째 노드가 될 fir이 되게 설정
+
+	free(del);  //삭제할 노드 del 메모리 반환
 
 	return 1;
 
@@ -242,11 +276,6 @@ int deleteFirst(listNode* h) {
  */
 int invertList(listNode* h) {
 
-	listNode* now = h->rlink;
-	listNode* prev = h->rlink;
-	listNode* temp = h->rlink;
-
-	
 
 
 
@@ -258,27 +287,41 @@ int invertList(listNode* h) {
 /* 리스트를 검색하여, 입력받은 key보다 큰값이 나오는 노드 바로 앞에 삽입 */
 int insertNode(listNode* h, int key) {
 
-	listNode* new = (listNode*)malloc(sizeof(listNode));  //신규 노드 new 메모리 할당
+	listNode* new = (listNode*)malloc(sizeof(listNode));  //새 노드 new 선언 및 메모리 할당
 	new->key = key;
-	
-	listNode* now = h->rlink;  //리스트를 이동할 now 노드
+	new->llink = NULL;
+	new->rlink = NULL;
 
-	if(now->rlink == h) {  //만약 리스트가 비어있으면
-		h->rlink = new;  //헤드노드의 좌우 노드를 new로
+	listNode* now = h->rlink;  //리스트를 이동할 now
+	listNode* prev = NULL;  //now를 뒤따라갈 prev
+
+	if(now == h) {  //리스트가 비어있었으면 유일한 노드로 헤드노드와 연결
 		h->llink = new;
-		new->llink = h;  //new의 좌우 노드를 헤드노드로
+		h->rlink = new;
+		new->llink = h;
 		new->rlink = h;
+		return 1;
 	}
 
-	while(now->rlink != h) {  //한 바퀴를 돌면서
-		if(new->key > now->key) {  //만약 new의 key가 now의 key보다 크면
-			now->llink->rlink = new;  //now의 이전 노드의 다음 노드를 new로 수정
-			new->llink = now->llink;  //new의 llink를 now의 이전 노드로 설정
-			new->rlink = now;  //new의 rlink를 now로 설정
-			now->llink = new;  //now의 llink를 new로 설정
+	while(now != h) {  //리스트를 한 바퀴 돌면서
+		if(now->key >= new->key) {  //now의 key값이 입력한 key값보다 클 경우
+			if(now == h->rlink) {  //근데 now가 첫번째 노드였다면
+				insertFirst(h, key);  //첫번째 노드를 삽입하는 함수 사용
+			}
+			else {
+				prev = now->llink;  //prev를 now의 이전 노드로 설정
+				new->llink = prev;  //새 노드의 llink가 prev를 가리키게 설정
+				new->rlink = now;  //새 노드의 rlink가 now를 가리키게 설정
+				prev->rlink = new;  //prev의 다음 노드가 새 노드가 되게 설정
+				now->llink = new;  //now의 이전 노드가 새 노드가 되게 설정
+			}
+			return 0;
 		}
-		now = now->rlink;  //아니면 다음 노드로 이동
+
+		now = now->rlink;  //다음 노드로 이동
 	}
+
+	insertLast(h, key);  //리스트에서 입력한 key값보다 큰 값을 찾지 못하면 리스트 마지막에 노드 삽입하는 함수 사용
 
 	return 0;
 }
@@ -289,21 +332,25 @@ int insertNode(listNode* h, int key) {
  */
 int deleteNode(listNode* h, int key) {
 
-	listNode* now = h->rlink;  //리스트를 이동할 now 노드
+	listNode* now = h->rlink;  //리스트를 이동할 now
+	listNode* prev = now->llink;  //now의 이전 노드 prev
+	listNode* next = now->rlink;  //now의 다음 노드 next
 
-	if(now->rlink = h) {  //만약 리스트가 비어있으면 오류메시지 출력
+	if(now == h) {  //리스트가 비어있었다면 오류메시지 출력
 		printf("nothing to delete");
-		return 0;
+		return 1;
 	}
 
-	while(now->rlink != h) {  //한 바퀴를 돌면서
-		if(now->key == key) {  //만약 입력된 key와 노드의 key가 같다면
-			freeList(now);  //노드 반환
+	while(now != h) {  //리스트를 한 바퀴 돌면서
+		if(now->key == key) {  //입력한 key값을 가진 노드를 찾으면
+			prev->rlink = next;  //now의 이전 노드의 rlink를 now의 다음 노드를 가리키게 설정
+			next->llink = prev;  //now의 다음 노드의 llink를 now의 이전 노드를 가리키게 설정
+			free(now);  //now 노드 메모리 반환
 			return 1;
 		}
-		else {
-			now = now->rlink;  //아니면 다음 노드로 이동
-		}
+		prev = now;  //prev, now, next 노드를 한 칸 앞으로 이동
+		now = now->rlink;
+		next = now->rlink;
 	}
 
 	return 0;
