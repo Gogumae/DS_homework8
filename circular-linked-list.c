@@ -216,7 +216,7 @@ int deleteLast(listNode* h) {
 
 	if(del == h) {  //리스트가 비어있으면 오류메시지 출력
 		printf("nothing to delete");
-		return 1;
+		return 0;
 	}
 
 	tail->rlink = h;  //마지막 노드가 될 tail의 다음 노드가 헤드노드가 되게 설정
@@ -258,7 +258,7 @@ int deleteFirst(listNode* h) {
 
 	if(del == h) {  //리스트가 비어있으면 오류메시지 출력
 		printf("nothing to delete");
-		return 1;
+		return 0;
 	}
 
 	fir->llink = h;  //첫번째 노드의 이전 노드가 헤드노드가 되게 설정
@@ -276,8 +276,24 @@ int deleteFirst(listNode* h) {
  */
 int invertList(listNode* h) {
 
+	if(h->rlink == h) {  //리스트가 비어있으면 오류메시지 출력
+		printf("nothing to invert");
+		return 0;
+	}
 
+	listNode* now = h->rlink;  //리스트를 이동하며 역순으로 재배치 될 세 노드
+	listNode* tail = NULL;
+	listNode* mid = NULL;
 
+	while(now != h) {  //리스트를 한 바퀴 돌면서 리스트 역순 재배치
+		tail = mid;  //중간이 될 노드를 재배치를 위한 세 노드 중 마지막이 될 노드에 저장
+		mid = now;  //현재 노드를 중간이 될 노드에 저장
+		now = now->rlink;  //현재 노드는 다음 칸으로 이동
+		mid->rlink = tail;  //중간이 될 노드에서 llink와 rlink를 now의 역으로 연결
+		mid->llink = now;
+	}
+
+	h->rlink = mid;  //헤드노드의 다음 노드를 mid 노드가 되게 설정
 
 	return 0;
 }
@@ -336,9 +352,9 @@ int deleteNode(listNode* h, int key) {
 	listNode* prev = now->llink;  //now의 이전 노드 prev
 	listNode* next = now->rlink;  //now의 다음 노드 next
 
-	if(now == h) {  //리스트가 비어있었다면 오류메시지 출력
+	if(now == h) {  //리스트가 비어있으면 오류메시지 출력
 		printf("nothing to delete");
-		return 1;
+		return 0;
 	}
 
 	while(now != h) {  //리스트를 한 바퀴 돌면서
